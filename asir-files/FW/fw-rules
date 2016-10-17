@@ -1,0 +1,52 @@
+#!/bin/sh
+
+if [$# -ne 1]
+        then
+        echo "se requiere un parámetro [ start | stop ]"
+exit 1
+fi
+
+case $1 in
+
+"start")
+
+#default policies
+iptables -P INPUT DROP
+iptables -P OUTPUT DROP
+iptables -P FORWARD DROP
+
+# SSH INPUT access rules: WAN
+iptables -A INPUT -i ens9 -d 10.3.4.182 -p tcp --dport 2222 -j ACCEPT
+iptables -A OUTPUT -o ens9 -s 10.3.4.182 -p tcp --sport 2222 -j ACCEPT
+# SSH INPUT access rules: DMZ
+iptables -A INPUT -i ens3 -d 172.20.117.100 -p tcp --dport 2222 -j ACCEPT
+iptables -A OUTPUT -o ens3 -s172.20.117.100 -p tcp --sport 2222 -j ACCEPT
+# SSH INPUT access rules: LAN
+iptables -A INPUT -i ens10 -d 192.168.117.254 -p tcp --dport 2222 -j ACCEPT
+iptables -A OUTPUT -o ens10 -s 192.168.117.254 -p tcp --sport 2222 -j ACCEPT
+
+# DHCP access rules:LAN
+iptables -A INPUT -i ens10 -p udp --dport 67 --sport 68 -j ACCEPT
+iptables -A OUTPUT -o ens10 -p udp --sport 67 --dport 68 -j ACCEPT
+# DHCP access rules:DMZ
+iptables -A INPUT -i ens3 -p udp --dport 67 --sport 68 -j ACCEPT
+iptables -A OUTPUT -o ens3 -p udp --sport 67 --dport 68 -j ACCEPT
+
+;;
+ iptables -F
+iptables -P INPUT ACCEPT
+iptables -P OUTPUT ACCEPT
+iptables -P FORWARD ACCEPT
+
+; ;
+
+*)
+
+ECHO "Se requiere un prámetro válido [start | stop]" 
+
+exit 
+; ;
+
+esac 
+exit 0
+
